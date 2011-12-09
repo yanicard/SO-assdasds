@@ -10,8 +10,9 @@
 
 /* Prototipo de funciones */
 char* grades(int carrera);
-int crear_carpetas(int length, char* sdir, int argc, char* argv);
-void mover_archivos(char *direccion, char *archivo);
+int crear_carpetas(int length, char *sdir, int argc, char *argv);
+int log_text(char *direccion, char *archivo, char *argv);
+void mover_archivos(char *dir_actual, char *dir_nueva, char *archivo, char *argv);
 
 /* main */
 int main(int argc, char *argv[]){
@@ -56,6 +57,9 @@ int main(int argc, char *argv[]){
 		
         crear_carpetas(length, sdir->d_name, argc, argv[1]);
     }
+    
+    /* Mueve el archivo log.txt a la carpeta 'tareas' */
+    rename("log.txt", "tareas/log.txt");
     
     /* int closedir(DIR *dir);  Cierra el directorio abierto con opendir.
      *
@@ -146,7 +150,7 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
     int i, flag=1, flag2=1;
 	char year_aux[argc];
 	char grade_aux[argc];
-	char* carrera; 
+	char* carrera, *dir_actual; 
 	
 	if ((fdir = opendir(argv)) == NULL)
     {
@@ -154,10 +158,10 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
         return 0;
     }
 	
-	// verificaciones
+		//Verificaciones
         if (length == 14 ) {
 			strncpy(year,sdir,2);
-            // swap caracteres, se deja listo el año
+            //Swap caracteres, se deja listo el año
             year[3] = year[1];
             year[1] = '0';
             year[2] = '0';
@@ -192,6 +196,7 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 			}
             
             carrera = (char*) malloc (30);
+            dir_actual = (char*) malloc (40);
 			strcpy(carrera, grades(atoi(grade)));
             
             if(strcmp("nada",carrera)){
@@ -209,7 +214,11 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 					//Se crea la carpeta para la carrera
 					mkdir(grade_aux, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 					
-					mover_archivos(grade_aux, sdir);
+					strcpy(dir_actual, argv);
+					strcat(dir_actual, "/");
+					strcat(dir_actual, sdir);
+					
+					mover_archivos(dir_actual, grade_aux, sdir, argv);
 				}
 			}
 			
@@ -219,6 +228,7 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 				{grade_aux[i]= 0;}
 			
 			free(carrera);
+			free(dir_actual);
 			
 			if(closedir(fder) == -1){
 				perror("closedir");
@@ -257,6 +267,7 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 			}
             
 			carrera = (char*) malloc (30);
+			dir_actual = (char*) malloc (40);
 			strcpy(carrera, grades(atoi(grade)));
             
             if(strcmp("nada",carrera)){
@@ -272,6 +283,11 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 					strcat(grade_aux, "/");
 					strcat(grade_aux, carrera);
 					mkdir(grade_aux, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+					
+					strcpy(dir_actual, argv);
+					strcat(dir_actual, "/");
+					strcat(dir_actual, sdir);
+					mover_archivos(dir_actual, grade_aux, sdir, argv);
 				}
 			}
 			
@@ -281,6 +297,7 @@ int crear_carpetas(int length, char* sdir, int argc, char* argv){
 				{grade_aux[i]= 0;}
 			
 			free(carrera);
+			free(dir_actual);
 			
 			if(closedir(fder) == -1){
 				perror("closedir");
@@ -296,8 +313,42 @@ if(closedir(fdir) == -1){
 return 0;
 }
 
-void mover_archivos(char *direccion, char *archivo){
-		if(strcmp(archivo, "2000") || strcmp(archivo, "2001") || strcmp(archivo, "2002") || strcmp(archivo, "2003") || strcmp(archivo, "2004") || strcmp(archivo, "2005") || strcmp(archivo, "2006") || strcmp(archivo, "2007") || strcmp(archivo, "2008") || strcmp(archivo, "2009") || strcmp(archivo, "2010") || strcmp(archivo, "2011")){
-			// mover archivo xD
-		}
+int log_text(char *direccion, char *archivo, char *argv){
+	struct stat buf;
+	FILE *fp;
+	char *cadena = (char*)malloc(100);
+    
+    strcpy(cadena, "El archivo '");
+    strcat(cadena, archivo);
+    strcat(cadena, "' fue movido a la carpeta ");
+    strcat(cadena, direccion);
+    strcat(cadena, " ( KB)\n");
+    
+	fp = fopen("log.txt","a");
+	fputs(cadena, fp);
+    fclose(fp);
+	
+	free(cadena);
+	if (stat(argv, &buf) == -1){
+			perror("stat");
+			return 0;
+	}
+return 0;
 }
+
+void mover_archivos(char *dir_actual, char *dir_nueva, char *archivo, char *argv){
+	char *direccion;
+	
+	direccion = (char*)(malloc (30));
+	if(strcmp(archivo, "2000") && strcmp(archivo, "2001") && strcmp(archivo, "2002") && strcmp(archivo, "2003") && strcmp(archivo, "2004") && strcmp(archivo, "2005") && strcmp(archivo, "2006") && strcmp(archivo, "2007") && strcmp(archivo, "2008") && strcmp(archivo, "2009") && strcmp(archivo, "2010") && strcmp(archivo, "2011")){
+		strcpy(direccion, dir_nueva);
+		strcat(dir_nueva, "/");
+		strcat(dir_nueva, archivo);
+	
+		rename(dir_actual, dir_nueva);
+	
+		log_text(direccion, archivo, argv);
+	}
+	free(direccion);
+}
+
