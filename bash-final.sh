@@ -12,9 +12,6 @@ function log {
 function checkYear {
 	if [ ! -d $1 ]; then
 		mkdir $1
-		folder=$1
-	else
-		folder=$1
 	fi
 }
 # function to check grade [param $folder $grade]
@@ -89,15 +86,16 @@ for FILE in `ls`; do
 		first=${year:0:1}
 		second=${year:1:1}
 		year="${first}00${second}"
-	fi
-	if [ $length -eq 17 ]; then
+	else
 		year=${name:0:4}
 		grad=${name:4:2}
 	fi
-	# create folders to years and grade
-	checkYear $year # return $folder
-	checkGrade $folder $grad # return $grade
-	if [ $grade != 0 ]; then
-		moveFile $name $folder $grade $size
+	# create folders to years and 
+	if [ $year -ge "2000" ] && [ $year -le "2011" ]; then
+		checkYear $year # return $folder
+		checkGrade $year $grad # return $grade
+		if [ $grade != 0 ]; then
+			moveFile $name $year $grade $size
+		fi
 	fi
 done
